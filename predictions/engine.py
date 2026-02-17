@@ -3,7 +3,7 @@ Motor de matching de ordens para o prediction market.
 Implementa um order book com matching price-time priority.
 """
 from decimal import Decimal
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 from .models import Order, Trade, Position, MarketOutcome, PriceHistory
 from wallet.models import Wallet
