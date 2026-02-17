@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ market.title }} - Mercado de Previsão{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'predictions:market_list' %}" class="text-success">Mercados</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'predictions:market_list' %}?cat={{ market.category.slug }}" class="text-success">{{ market.category.name }}</a></li>
+            <li class="breadcrumb-item active text-muted">{{ market.title|truncatewords:5 }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Left Column: Market Info + Chart -->
+        <div class="col-lg-8">
+            <!-- Market Header -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <span class="badge bg-{{ market.category.color }} rounded-pill">
+                            <i class="{{ market.category.icon }}"></i> {{ market.category.name }}
+                        </span>
+                        <span class="badge {% if market.status == 'open' %}bg-success{% elif market.status == 'resolved' %}bg-info{% else %}bg-secondary{% endif %} rounded-pill">
+                            {{ market.get_status_display }}
+                        </span>
+                    </div>
+                    <h3 class="text-white fw-bold mb-3">{{ market.title }}</h3>
+                    <p class="text-muted">{{ market.description }}</p>
+
+                    <!-- Outcome Price Bars -->
+                    <div class="row g-3 mb-3">
+                        {% for outcome in market.outcomes.all %}
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded {% if outcome.slug == 'yes' %}border border-success{% else %}border border-danger{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-white">{{ outcome.name }}</span>
+                                    <span class="fs-3 fw-bold {% if outcome.slug == 'yes' %}text-success{% else %}text-danger{% endif %}">
+                                        {{ outcome.price_percent }}¢
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar {% if outcome.slug == 'yes' %}bg-success{% else %}bg-danger{% endif %}"
+                                         style="width: {{ outcome.price_percent }}%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small mt-1">
+                                    <span>{{ outcome.price_percent }}% probabilidade</span>
+                                    <span>{{ outcome.total_shares|floatformat:0 }} shares</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-3 text-muted small">
+                        <span><i class="bi bi-bar-chart"></i> Volume: ${{ market.total_volume|floatformat:2|intcomma }}</span>
+                        <span><i class="bi bi-clock"></i> Encerra: {{ market.end_date|date:"d/m/Y H:i" }}</span>
+                        {% if market.time_left %}
+                        <span class="text-success"><i class="bi bi-hourglass-split"></i> {{ market.time_left.days }}d restantes</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Chart -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-graph-up"></i> Histórico de Preço</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="priceChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Order Book -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-book"></i> Order Book</h6>
+                </div>
+                <div class="card-body">
+                    {% for outcome in market.outcomes.all %}
+                    <h6 class="text-white mb-2 {% if not forloop.first %}mt-4{% endif %}">
+                        <span class="badge {% if outcome.slug == 'yes' %}bg-success{% else %}bg-danger{% endif %}">{{ outcome.name }}</span>
+                        {{ outcome.price_percent }}¢
+                    </h6>
+                    <div class="row g-2">
+                        <!-- Bids (Buy) -->
+                        <div class="col-6">
+                            <div class="small text-success fw-bold mb-1">COMPRA (Bids)</div>
+                            <table class="table table-sm table-dark mb-0" style="font-size:0.8rem;">
+                                <thead>
+                                    <tr class="text-muted">
+                                        <th>Preço</th>
+                                        <th class="text-end">Qtd</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bids-{{ outcome.slug }}">
+                                    <tr><td colspan="2" class="text-muted text-center">Sem ordens</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Asks (Sell) -->
+                        <div class="col-6">
+                            <div class="small text-danger fw-bold mb-1">VENDA (Asks)</div>
+                            <table class="table table-sm table-dark mb-0" style="font-size:0.8rem;">
+                                <thead>
+                                    <tr class="text-muted">
+                                        <th>Preço</th>
+                                        <th class="text-end">Qtd</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="asks-{{ outcome.slug }}">
+                                    <tr><td colspan="2" class="text-muted text-center">Sem ordens</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Trades -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-arrow-left-right"></i> Trades Recentes</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-dark table-sm mb-0">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>Outcome</th>
+                                <th>Preço</th>
+                                <th>Quantidade</th>
+                                <th class="text-end">Quando</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in recent_trades %}
+                            <tr class="small">
+                                <td>
+                                    <span class="badge {% if trade.outcome.slug == 'yes' %}bg-success{% else %}bg-danger{% endif %} bg-opacity-25">
+                                        {{ trade.outcome.name }}
+                                    </span>
+                                </td>
+                                <td class="text-white">${{ trade.price|floatformat:2 }}</td>
+                                <td>{{ trade.quantity|floatformat:0 }} shares</td>
+                                <td class="text-end text-muted">{{ trade.created_at|timesince }} atrás</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">Nenhum trade realizado ainda.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Rules -->
+            {% if market.rules %}
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-info-circle"></i> Regras de Resolução</h6>
+                </div>
+                <div class="card-body text-muted">
+                    {{ market.rules|linebreaksbr }}
+                    {% if market.resolution_source %}
+                    <hr>
+                    <small><strong>Fonte:</strong> {{ market.resolution_source }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Trading Panel -->
+        <div class="col-lg-4">
+            <!-- Trading Panel -->
+            {% if market.is_open %}
+            <div class="card bg-dark border-success mb-3 sticky-top" style="top: 80px;">
+                <div class="card-header border-success bg-success bg-opacity-10">
+                    <h6 class="mb-0 text-success"><i class="bi bi-cart-plus"></i> Trade</h6>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'predictions:place_order' market.slug %}" id="tradeForm">
+                        {% csrf_token %}
+
+                        <!-- Outcome Selection -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Outcome</label>
+                            <div class="btn-group w-100" role="group">
+                                {% for outcome in market.outcomes.all %}
+                                <input type="radio" class="btn-check" name="outcome_id" id="outcome_{{ outcome.id }}"
+                                       value="{{ outcome.id }}" {% if forloop.first %}checked{% endif %}
+                                       data-price="{{ outcome.price }}">
+                                <label class="btn {% if outcome.slug == 'yes' %}btn-outline-success{% else %}btn-outline-danger{% endif %}"
+                                       for="outcome_{{ outcome.id }}">
+                                    {{ outcome.name }} {{ outcome.price_percent }}¢
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Side Selection -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Tipo</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="side" id="sideBuy" value="buy" checked>
+                                <label class="btn btn-outline-success" for="sideBuy">
+                                    <i class="bi bi-arrow-up-circle"></i> Comprar
+                                </label>
+                                <input type="radio" class="btn-check" name="side" id="sideSell" value="sell">
+                                <label class="btn btn-outline-danger" for="sideSell">
+                                    <i class="bi bi-arrow-down-circle"></i> Vender
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Preço por Share ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-muted">$</span>
+                                <input type="number" name="price" id="tradePrice" class="form-control bg-dark border-secondary text-white"
+                                       step="0.01" min="0.01" max="0.99" value="0.50" required>
+                            </div>
+                            <div class="form-text">
+                                <input type="range" class="form-range" id="priceSlider" min="1" max="99" value="50"
+                                       oninput="document.getElementById('tradePrice').value = (this.value/100).toFixed(2); updateTotal();">
+                            </div>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Shares</label>
+                            <input type="number" name="quantity" id="tradeQty" class="form-control bg-dark border-secondary text-white"
+                                   min="1" step="1" value="10" required oninput="updateTotal()">
+                        </div>
+
+                        <!-- Total -->
+                        <div class="p-3 rounded bg-dark border border-secondary mb-3">
+                            <div class="d-flex justify-content-between text-muted small mb-1">
+                                <span>Custo Total:</span>
+                                <span class="text-white fw-bold" id="totalCost">$5.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small mb-1">
+                                <span>Retorno Potencial:</span>
+                                <span class="text-success fw-bold" id="potReturn">$10.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>Lucro Potencial:</span>
+                                <span class="text-success fw-bold" id="potProfit">$5.00 (100%)</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 fw-bold" id="submitBtn">
+                            <i class="bi bi-cart-check"></i> Comprar Shares
+                        </button>
+
+                        {% if user.is_authenticated %}
+                        <div class="text-center text-muted small mt-2">
+                            Saldo: <strong class="text-warning">R$ {{ user.balance|floatformat:2 }}</strong>
+                        </div>
+                        {% endif %}
+                    </form>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-lock text-muted fs-1"></i>
+                        <p class="text-muted mt-2">Faça login para fazer trades</p>
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-success">
+                            <i class="bi bi-box-arrow-in-right"></i> Entrar
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- User Position -->
+            {% if user_positions %}
+            <div class="card bg-dark border-info mb-3">
+                <div class="card-header border-info bg-info bg-opacity-10">
+                    <h6 class="mb-0 text-info"><i class="bi bi-briefcase"></i> Sua Posição</h6>
+                </div>
+                <div class="card-body">
+                    {% for slug, pos in user_positions.items %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-dark border border-secondary">
+                        <div>
+                            <span class="badge {% if slug == 'yes' %}bg-success{% else %}bg-danger{% endif %}">{{ pos.outcome.name }}</span>
+                            <div class="small text-white mt-1">{{ pos.shares|floatformat:0 }} shares</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-white">${{ pos.current_value|floatformat:2 }}</div>
+                            <div class="small {% if pos.unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if pos.unrealized_pnl >= 0 %}+{% endif %}${{ pos.unrealized_pnl|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- User Open Orders -->
+            {% if user_orders %}
+            <div class="card bg-dark border-warning mb-3">
+                <div class="card-header border-warning bg-warning bg-opacity-10">
+                    <h6 class="mb-0 text-warning"><i class="bi bi-clock-history"></i> Ordens Abertas</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-dark table-sm mb-0">
+                        <tbody>
+                            {% for order in user_orders %}
+                            <tr class="small">
+                                <td>
+                                    <span class="badge {% if order.side == 'buy' %}bg-success{% else %}bg-danger{% endif %} bg-opacity-50">
+                                        {{ order.get_side_display }}
+                                    </span>
+                                </td>
+                                <td class="text-white">{{ order.outcome.name }}</td>
+                                <td>${{ order.price|floatformat:2 }}</td>
+                                <td>{{ order.remaining_quantity|floatformat:0 }}</td>
+                                <td class="text-end">
+                                    <form method="post" action="{% url 'predictions:cancel_order' order.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script>
+// Order Book data
+const orderBooks = {{ order_books_json|safe }};
+for (const [slug, data] of Object.entries(orderBooks)) {
+    const bidsTbody = document.getElementById('bids-' + slug);
+    const asksTbody = document.getElementById('asks-' + slug);
+    if (bidsTbody && data.bids.length > 0) {
+        bidsTbody.innerHTML = data.bids.map(b => 
+            `<tr><td class="text-success">$${b.price.toFixed(2)}</td><td class="text-end">${Math.round(b.qty)}</td></tr>`
+        ).join('');
+    }
+    if (asksTbody && data.asks.length > 0) {
+        asksTbody.innerHTML = data.asks.map(a => 
+            `<tr><td class="text-danger">$${a.price.toFixed(2)}</td><td class="text-end">${Math.round(a.qty)}</td></tr>`
+        ).join('');
+    }
+}
+
+// Price Chart
+const priceData = {{ price_data|safe }};
+const ctx = document.getElementById('priceChart');
+
+if (ctx) {
+    const datasets = [];
+    const colors = {'yes': '#198754', 'no': '#dc3545'};
+    const labels = {'yes': 'Sim', 'no': 'Não'};
+
+    for (const [slug, data] of Object.entries(priceData)) {
+        if (data.length > 0) {
+            datasets.push({
+                label: labels[slug] || slug,
+                data: data.map(d => ({x: new Date(d.t), y: d.p * 100})),
+                borderColor: colors[slug] || '#0dcaf0',
+                backgroundColor: (colors[slug] || '#0dcaf0') + '20',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2,
+            });
+        }
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { labels: { color: '#adb5bd' } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}¢`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    ticks: { color: '#6c757d' },
+                    grid: { color: '#343a40' },
+                },
+                y: {
+                    min: 0, max: 100,
+                    ticks: { color: '#6c757d', callback: v => v + '¢' },
+                    grid: { color: '#343a40' },
+                }
+            }
+        }
+    });
+}
+
+// Trading form logic
+function updateTotal() {
+    const price = parseFloat(document.getElementById('tradePrice').value) || 0;
+    const qty = parseInt(document.getElementById('tradeQty').value) || 0;
+    const side = document.querySelector('input[name="side"]:checked').value;
+
+    const cost = (price * qty).toFixed(2);
+    const ret = (1.00 * qty).toFixed(2);
+    const profit = (ret - cost).toFixed(2);
+    const pct = cost > 0 ? ((profit / cost) * 100).toFixed(0) : 0;
+
+    document.getElementById('totalCost').textContent = `$${cost}`;
+    document.getElementById('potReturn').textContent = `$${ret}`;
+    document.getElementById('potProfit').textContent = `$${profit} (${pct}%)`;
+
+    const btn = document.getElementById('submitBtn');
+    if (side === 'buy') {
+        btn.className = 'btn btn-success w-100 fw-bold';
+        btn.innerHTML = '<i class="bi bi-arrow-up-circle"></i> Comprar Shares';
+    } else {
+        btn.className = 'btn btn-danger w-100 fw-bold';
+        btn.innerHTML = '<i class="bi bi-arrow-down-circle"></i> Vender Shares';
+    }
+
+    // Update slider
+    const slider = document.getElementById('priceSlider');
+    slider.value = Math.round(price * 100);
+}
+
+// Set initial price from selected outcome
+document.querySelectorAll('input[name="outcome_id"]').forEach(input => {
+    input.addEventListener('change', function() {
+        const price = parseFloat(this.dataset.price);
+        document.getElementById('tradePrice').value = price.toFixed(2);
+        document.getElementById('priceSlider').value = Math.round(price * 100);
+        updateTotal();
+    });
+});
+
+document.querySelectorAll('input[name="side"]').forEach(input => {
+    input.addEventListener('change', updateTotal);
+});
+
+document.getElementById('tradePrice').addEventListener('input', function() {
+    document.getElementById('priceSlider').value = Math.round(this.value * 100);
+    updateTotal();
+});
+
+// Init
+document.addEventListener('DOMContentLoaded', function() {
+    const firstOutcome = document.querySelector('input[name="outcome_id"]:checked');
+    if (firstOutcome) {
+        const price = parseFloat(firstOutcome.dataset.price);
+        document.getElementById('tradePrice').value = price.toFixed(2);
+        document.getElementById('priceSlider').value = Math.round(price * 100);
+    }
+    updateTotal();
+});
+</script>
+{% endblock %}

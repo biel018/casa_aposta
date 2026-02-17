@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Depósito Crypto - Carteira{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2 class="text-white fw-bold mb-4">
+                <i class="bi bi-currency-bitcoin text-warning"></i> Depósito Crypto
+            </h2>
+
+            <!-- Crypto Selection -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-coin"></i> Escolha a Criptomoeda</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-4">
+                            <div class="crypto-option p-3 rounded border border-secondary text-center cursor-pointer active" data-crypto="ETH" data-price="3200">
+                                <div class="fs-3 mb-1">⟠</div>
+                                <div class="fw-bold text-white">Ethereum</div>
+                                <div class="text-muted small">ETH</div>
+                                <div class="text-success small mt-1">$3,200.00</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="crypto-option p-3 rounded border border-secondary text-center cursor-pointer" data-crypto="BTC" data-price="97000">
+                                <div class="fs-3 mb-1">₿</div>
+                                <div class="fw-bold text-white">Bitcoin</div>
+                                <div class="text-muted small">BTC</div>
+                                <div class="text-success small mt-1">$97,000.00</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="crypto-option p-3 rounded border border-secondary text-center cursor-pointer" data-crypto="USDT" data-price="1">
+                                <div class="fs-3 mb-1">₮</div>
+                                <div class="fw-bold text-white">Tether</div>
+                                <div class="text-muted small">USDT</div>
+                                <div class="text-success small mt-1">$1.00</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="crypto-option p-3 rounded border border-secondary text-center cursor-pointer" data-crypto="USDC" data-price="1">
+                                <div class="fs-3 mb-1">◉</div>
+                                <div class="fw-bold text-white">USD Coin</div>
+                                <div class="text-muted small">USDC</div>
+                                <div class="text-success small mt-1">$1.00</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="crypto-option p-3 rounded border border-secondary text-center cursor-pointer" data-crypto="MATIC" data-price="0.85">
+                                <div class="fs-3 mb-1">⬡</div>
+                                <div class="fw-bold text-white">Polygon</div>
+                                <div class="text-muted small">MATIC</div>
+                                <div class="text-success small mt-1">$0.85</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Selection -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-diagram-3"></i> Rede</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-3">
+                            <div class="network-option p-2 rounded border border-secondary text-center cursor-pointer active" data-network="ethereum">
+                                <div class="fw-bold text-white small">Ethereum</div>
+                                <div class="text-muted" style="font-size:0.7rem;">ERC-20</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="network-option p-2 rounded border border-secondary text-center cursor-pointer" data-network="polygon">
+                                <div class="fw-bold text-white small">Polygon</div>
+                                <div class="text-muted" style="font-size:0.7rem;">Baixo gas</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="network-option p-2 rounded border border-secondary text-center cursor-pointer" data-network="arbitrum">
+                                <div class="fw-bold text-white small">Arbitrum</div>
+                                <div class="text-muted" style="font-size:0.7rem;">L2</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="network-option p-2 rounded border border-secondary text-center cursor-pointer" data-network="bsc">
+                                <div class="fw-bold text-white small">BSC</div>
+                                <div class="text-muted" style="font-size:0.7rem;">BEP-20</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deposit Method -->
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header border-secondary">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active text-white" data-bs-toggle="tab" data-bs-target="#metamask-tab">
+                                <i class="bi bi-wallet2"></i> MetaMask
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link text-white" data-bs-toggle="tab" data-bs-target="#manual-tab">
+                                <i class="bi bi-clipboard"></i> Manual
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- MetaMask Tab -->
+                        <div class="tab-pane fade show active" id="metamask-tab">
+                            <div id="metamaskSection">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">Quantidade</label>
+                                    <div class="input-group">
+                                        <input type="number" id="metamaskAmount" class="form-control bg-dark border-secondary text-white"
+                                               step="0.001" min="0.001" placeholder="0.00" value="0.01">
+                                        <span class="input-group-text bg-dark border-secondary text-warning" id="cryptoSymbol">ETH</span>
+                                    </div>
+                                    <div class="form-text text-muted">Estimativa: <span class="text-success" id="usdEstimate">~$32.00</span></div>
+                                </div>
+                                <button id="btnMetaMaskDeposit" class="btn btn-warning w-100 fw-bold" onclick="depositWithMetaMask()">
+                                    <i class="bi bi-wallet2"></i> Depositar via MetaMask
+                                </button>
+                                <div id="metamaskStatus" class="mt-2 text-center small"></div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Tab -->
+                        <div class="tab-pane fade" id="manual-tab">
+                            <div class="text-center mb-3">
+                                <p class="text-muted">Envie crypto para o endereço abaixo:</p>
+                                <div class="p-3 bg-black rounded border border-success">
+                                    <code class="text-success fs-6" id="depositAddress">0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18</code>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success mt-2" onclick="copyAddress()">
+                                    <i class="bi bi-clipboard"></i> Copiar Endereço
+                                </button>
+                            </div>
+                            <hr class="border-secondary">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">TX Hash (após enviar)</label>
+                                <input type="text" id="manualTxHash" class="form-control bg-dark border-secondary text-white"
+                                       placeholder="0x...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Quantidade enviada</label>
+                                <input type="number" id="manualAmount" class="form-control bg-dark border-secondary text-white"
+                                       step="0.001" min="0.001" placeholder="0.00">
+                            </div>
+                            <button class="btn btn-success w-100" onclick="confirmManualDeposit()">
+                                <i class="bi bi-check-circle"></i> Confirmar Depósito
+                            </button>
+                            <div id="manualStatus" class="mt-2 text-center small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deposit History -->
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-clock-history"></i> Histórico de Depósitos Crypto</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-dark table-sm mb-0">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>Crypto</th>
+                                <th>Quantidade</th>
+                                <th>USD</th>
+                                <th>TX</th>
+                                <th class="text-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dep in deposits %}
+                            <tr class="small">
+                                <td class="text-white">{{ dep.crypto }}</td>
+                                <td>{{ dep.amount_crypto }}</td>
+                                <td class="text-success">${{ dep.amount_usd|floatformat:2 }}</td>
+                                <td>
+                                    <code class="text-muted">{{ dep.tx_hash|truncatechars:14 }}</code>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge {% if dep.status == 'completed' %}bg-success{% elif dep.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ dep.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">Nenhum depósito crypto encontrado.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card bg-dark border-success mb-3">
+                <div class="card-body text-center">
+                    <div class="text-muted small">Saldo Atual</div>
+                    <div class="fs-2 fw-bold text-success">R$ {{ wallet.balance|floatformat:2 }}</div>
+                    <a href="{% url 'wallet:wallet' %}" class="btn btn-sm btn-outline-success mt-2">
+                        <i class="bi bi-wallet2"></i> Ver Carteira
+                    </a>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary">
+                    <h6 class="mb-0 text-white"><i class="bi bi-info-circle"></i> Informações</h6>
+                </div>
+                <div class="card-body text-muted small">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Depósitos processados instantaneamente</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Suporte a ETH, BTC, USDT, USDC, MATIC</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Múltiplas redes (Ethereum, Polygon, Arbitrum, BSC)</li>
+                        <li class="mb-2"><i class="bi bi-shield-check text-info"></i> Conversão automática para USD</li>
+                        <li><i class="bi bi-lightning text-warning"></i> Conecte MetaMask para depósito rápido</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+let selectedCrypto = 'ETH';
+let selectedNetwork = 'ethereum';
+let selectedPrice = 3200;
+
+// Crypto selection
+document.querySelectorAll('.crypto-option').forEach(el => {
+    el.addEventListener('click', function() {
+        document.querySelectorAll('.crypto-option').forEach(e => {
+            e.classList.remove('active', 'border-success');
+            e.classList.add('border-secondary');
+        });
+        this.classList.add('active', 'border-success');
+        this.classList.remove('border-secondary');
+        selectedCrypto = this.dataset.crypto;
+        selectedPrice = parseFloat(this.dataset.price);
+        document.getElementById('cryptoSymbol').textContent = selectedCrypto;
+        updateEstimate();
+    });
+});
+
+// Network selection
+document.querySelectorAll('.network-option').forEach(el => {
+    el.addEventListener('click', function() {
+        document.querySelectorAll('.network-option').forEach(e => {
+            e.classList.remove('active', 'border-success');
+            e.classList.add('border-secondary');
+        });
+        this.classList.add('active', 'border-success');
+        this.classList.remove('border-secondary');
+        selectedNetwork = this.dataset.network;
+    });
+});
+
+document.getElementById('metamaskAmount').addEventListener('input', updateEstimate);
+
+function updateEstimate() {
+    const amount = parseFloat(document.getElementById('metamaskAmount').value) || 0;
+    const usd = (amount * selectedPrice).toFixed(2);
+    document.getElementById('usdEstimate').textContent = `~$${usd}`;
+}
+
+function copyAddress() {
+    const addr = document.getElementById('depositAddress').textContent;
+    navigator.clipboard.writeText(addr);
+    alert('Endereço copiado!');
+}
+
+async function depositWithMetaMask() {
+    const statusEl = document.getElementById('metamaskStatus');
+
+    if (typeof window.ethereum === 'undefined') {
+        statusEl.innerHTML = '<span class="text-danger">MetaMask não detectado! Instale em metamask.io</span>';
+        return;
+    }
+
+    const amount = document.getElementById('metamaskAmount').value;
+    if (!amount || parseFloat(amount) <= 0) {
+        statusEl.innerHTML = '<span class="text-danger">Informe uma quantidade válida</span>';
+        return;
+    }
+
+    try {
+        statusEl.innerHTML = '<span class="text-warning"><i class="bi bi-hourglass-split"></i> Conectando MetaMask...</span>';
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const fromAddress = await signer.getAddress();
+
+        statusEl.innerHTML = '<span class="text-warning"><i class="bi bi-hourglass-split"></i> Confirme no MetaMask...</span>';
+
+        const platformAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18';
+
+        let tx;
+        if (selectedCrypto === 'ETH' || selectedCrypto === 'MATIC') {
+            // Native token transfer
+            tx = await signer.sendTransaction({
+                to: platformAddress,
+                value: ethers.parseEther(amount),
+            });
+        } else {
+            // ERC-20 transfer (simplified)
+            statusEl.innerHTML = '<span class="text-info">Para tokens ERC-20, use a aba Manual com o TX hash</span>';
+            return;
+        }
+
+        statusEl.innerHTML = '<span class="text-warning"><i class="bi bi-hourglass-split"></i> Aguardando confirmação...</span>';
+
+        await tx.wait();
+
+        // Send TX to backend
+        const response = await fetch('/wallet/api/crypto/send-tx/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                tx_hash: tx.hash,
+                crypto: selectedCrypto,
+                amount: amount,
+                from_address: fromAddress,
+                network: selectedNetwork,
+            }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            statusEl.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> ${data.message}</span>`;
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            statusEl.innerHTML = `<span class="text-danger">${data.error}</span>`;
+        }
+    } catch (err) {
+        console.error(err);
+        if (err.code === 4001) {
+            statusEl.innerHTML = '<span class="text-warning">Transação cancelada pelo usuário</span>';
+        } else {
+            statusEl.innerHTML = `<span class="text-danger">Erro: ${err.message}</span>`;
+        }
+    }
+}
+
+async function confirmManualDeposit() {
+    const txHash = document.getElementById('manualTxHash').value;
+    const amount = document.getElementById('manualAmount').value;
+    const statusEl = document.getElementById('manualStatus');
+
+    if (!txHash || !amount) {
+        statusEl.innerHTML = '<span class="text-danger">Preencha TX hash e quantidade</span>';
+        return;
+    }
+
+    try {
+        const response = await fetch('/wallet/api/crypto/confirm/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                tx_hash: txHash,
+                crypto: selectedCrypto,
+                amount: amount,
+                from_address: 'manual',
+                network: selectedNetwork,
+            }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            statusEl.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> ${data.message}</span>`;
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            statusEl.innerHTML = `<span class="text-danger">${data.error}</span>`;
+        }
+    } catch (err) {
+        statusEl.innerHTML = `<span class="text-danger">Erro: ${err.message}</span>`;
+    }
+}
+
+function getCookie(name) {
+    let value = null;
+    document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) value = decodeURIComponent(c.substring(name.length + 1));
+    });
+    return value;
+}
+</script>
+
+<style>
+.crypto-option, .network-option { cursor: pointer; transition: all 0.2s; }
+.crypto-option:hover, .network-option:hover { border-color: #198754 !important; }
+.crypto-option.active, .network-option.active { border-color: #198754 !important; background: rgba(25,135,84,0.1); }
+</style>
+{% endblock %}

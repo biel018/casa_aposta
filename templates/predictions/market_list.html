@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Mercados de Previsão - Polymarket Style{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="prediction-hero mb-4">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h1 class="fw-bold text-white mb-2">
+                    <i class="bi bi-graph-up-arrow text-success"></i> Mercados de Previsão
+                </h1>
+                <p class="text-muted mb-3">Compre e venda shares baseadas em eventos reais. Trade como no Polymarket.</p>
+                <div class="input-group" style="max-width: 500px;">
+                    <span class="input-group-text bg-dark border-secondary text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="searchMarkets" class="form-control bg-dark border-secondary text-white"
+                           placeholder="Buscar mercados..." value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-md-5 text-end d-none d-md-block">
+                <div class="d-flex justify-content-end gap-3">
+                    <div class="text-center">
+                        <div class="fs-2 fw-bold text-success">{{ markets.count }}</div>
+                        <small class="text-muted">Mercados</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="fs-2 fw-bold text-warning">6</div>
+                        <small class="text-muted">Categorias</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories & Filters -->
+<div class="container mb-4">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <a href="{% url 'predictions:market_list' %}"
+           class="btn btn-sm {% if not current_category %}btn-success{% else %}btn-outline-secondary{% endif %} rounded-pill">
+            <i class="bi bi-grid-3x3-gap"></i> Todos
+        </a>
+        {% for cat in categories %}
+        <a href="{% url 'predictions:market_list' %}?cat={{ cat.slug }}{% if current_status %}&status={{ current_status }}{% endif %}"
+           class="btn btn-sm {% if current_category == cat.slug %}btn-success{% else %}btn-outline-secondary{% endif %} rounded-pill">
+            <i class="{{ cat.icon }}"></i> {{ cat.name }}
+        </a>
+        {% endfor %}
+        <span class="text-muted mx-2">|</span>
+        <a href="{% url 'predictions:market_list' %}?status=open{% if current_category %}&cat={{ current_category }}{% endif %}"
+           class="btn btn-sm {% if current_status == 'open' %}btn-outline-success{% else %}btn-outline-secondary{% endif %} rounded-pill">
+            Abertos
+        </a>
+        <a href="{% url 'predictions:market_list' %}?status=resolved{% if current_category %}&cat={{ current_category }}{% endif %}"
+           class="btn btn-sm {% if current_status == 'resolved' %}btn-outline-info{% else %}btn-outline-secondary{% endif %} rounded-pill">
+            Resolvidos
+        </a>
+    </div>
+</div>
+
+<!-- Featured Markets -->
+{% if featured %}
+<div class="container mb-4">
+    <h5 class="text-white mb-3"><i class="bi bi-stars text-warning"></i> Em Destaque</h5>
+    <div class="row g-3">
+        {% for market in featured %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'predictions:market_detail' market.slug %}" class="text-decoration-none">
+                <div class="card bg-dark border-secondary h-100 market-card hover-glow">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <span class="badge bg-{{ market.category.color }} rounded-pill">
+                                <i class="{{ market.category.icon }}"></i> {{ market.category.name }}
+                            </span>
+                            {% if market.is_featured %}
+                            <span class="badge bg-warning text-dark rounded-pill">
+                                <i class="bi bi-star-fill"></i> Destaque
+                            </span>
+                            {% endif %}
+                        </div>
+                        <h6 class="text-white fw-bold mb-3">{{ market.title }}</h6>
+                        <div class="row g-2 mb-3">
+                            {% for outcome in market.outcomes.all %}
+                            <div class="col-6">
+                                <div class="d-flex justify-content-between align-items-center p-2 rounded
+                                    {% if outcome.slug == 'yes' %}bg-success bg-opacity-10 border border-success{% else %}bg-danger bg-opacity-10 border border-danger{% endif %}">
+                                    <span class="text-white small fw-bold">{{ outcome.name }}</span>
+                                    <span class="fw-bold {% if outcome.slug == 'yes' %}text-success{% else %}text-danger{% endif %}">
+                                        {{ outcome.price_percent }}¢
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span><i class="bi bi-bar-chart"></i> ${{ market.total_volume|floatformat:0|intcomma }}</span>
+                            <span><i class="bi bi-clock"></i> 
+                                {% if market.time_left %}
+                                    {{ market.time_left.days }}d restantes
+                                {% else %}
+                                    Encerrado
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- All Markets -->
+<div class="container mb-5">
+    <h5 class="text-white mb-3"><i class="bi bi-list-ul"></i> Todos os Mercados</h5>
+    <div class="row g-3" id="marketsList">
+        {% for market in markets %}
+        <div class="col-12 market-item" data-title="{{ market.title|lower }}">
+            <a href="{% url 'predictions:market_detail' market.slug %}" class="text-decoration-none">
+                <div class="card bg-dark border-secondary market-card hover-glow">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-{{ market.category.color }} rounded-pill small">
+                                        <i class="{{ market.category.icon }}"></i> {{ market.category.name }}
+                                    </span>
+                                    {% if market.status == 'resolved' %}
+                                    <span class="badge bg-info rounded-pill small">Resolvido</span>
+                                    {% endif %}
+                                </div>
+                                <h6 class="text-white fw-bold mb-1">{{ market.title }}</h6>
+                                <small class="text-muted">{{ market.description|truncatewords:20 }}</small>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex gap-2 my-2 my-md-0">
+                                    {% for outcome in market.outcomes.all %}
+                                    <div class="flex-fill text-center p-2 rounded
+                                        {% if outcome.slug == 'yes' %}bg-success bg-opacity-10 border border-success{% else %}bg-danger bg-opacity-10 border border-danger{% endif %}">
+                                        <div class="small text-muted">{{ outcome.name }}</div>
+                                        <div class="fs-5 fw-bold {% if outcome.slug == 'yes' %}text-success{% else %}text-danger{% endif %}">
+                                            {{ outcome.price_percent }}¢
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-md-end">
+                                <div class="text-muted small">
+                                    <div><i class="bi bi-bar-chart"></i> ${{ market.total_volume|floatformat:0|intcomma }} vol</div>
+                                    <div><i class="bi bi-clock"></i>
+                                        {% if market.time_left %}
+                                            {{ market.time_left.days }}d
+                                        {% else %}
+                                            Encerrado
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-inbox text-muted fs-1"></i>
+            <p class="text-muted mt-2">Nenhum mercado encontrado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchMarkets').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.market-item').forEach(item => {
+        const title = item.dataset.title;
+        item.style.display = title.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

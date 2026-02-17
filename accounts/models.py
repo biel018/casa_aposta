@@ -9,6 +9,11 @@ class User(AbstractUser):
     date_of_birth = models.DateField('Data de Nascimento', null=True, blank=True)
     avatar = models.ImageField('Avatar', upload_to='avatars/', blank=True, null=True)
     is_verified = models.BooleanField('Verificado', default=False)
+    # Web3 / MetaMask
+    wallet_address = models.CharField('Endereço Wallet', max_length=42, unique=True, blank=True, null=True,
+                                      help_text='Endereço Ethereum (MetaMask)')
+    nonce = models.CharField('Nonce', max_length=100, blank=True, default='',
+                             help_text='Nonce para autenticação Web3')
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Atualizado em', auto_now=True)
 

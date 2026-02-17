@@ -130,3 +130,50 @@ class Transaction(models.Model):
     @property
     def is_credit(self):
         return self.type in [self.DEPOSIT, self.WIN, self.REFUND]
+
+
+class CryptoDeposit(models.Model):
+    """Registro de depósito em criptomoeda."""
+    CRYPTO_CHOICES = [
+        ('ETH', 'Ethereum (ETH)'),
+        ('USDT', 'Tether (USDT)'),
+        ('USDC', 'USD Coin (USDC)'),
+        ('BTC', 'Bitcoin (BTC)'),
+        ('MATIC', 'Polygon (MATIC)'),
+    ]
+    NETWORK_CHOICES = [
+        ('ethereum', 'Ethereum Mainnet'),
+        ('polygon', 'Polygon'),
+        ('bsc', 'BNB Smart Chain'),
+        ('arbitrum', 'Arbitrum'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pendente'),
+        ('confirming', 'Confirmando'),
+        ('completed', 'Concluído'),
+        ('failed', 'Falhou'),
+    ]
+
+    wallet = models.ForeignKey(
+        Wallet, on_delete=models.CASCADE,
+        related_name='crypto_deposits', verbose_name='Carteira'
+    )
+    crypto = models.CharField('Criptomoeda', max_length=10, choices=CRYPTO_CHOICES)
+    network = models.CharField('Rede', max_length=20, choices=NETWORK_CHOICES, default='ethereum')
+    amount_crypto = models.DecimalField('Valor Crypto', max_digits=18, decimal_places=8)
+    amount_usd = models.DecimalField('Valor USD', max_digits=12, decimal_places=2)
+    tx_hash = models.CharField('TX Hash', max_length=66, unique=True)
+    from_address = models.CharField('Endereço Origem', max_length=42)
+    to_address = models.CharField('Endereço Destino', max_length=42)
+    confirmations = models.IntegerField('Confirmações', default=0)
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    confirmed_at = models.DateTimeField('Confirmado em', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Depósito Crypto'
+        verbose_name_plural = 'Depósitos Crypto'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.amount_crypto} {self.crypto} - {self.wallet.user.username}'

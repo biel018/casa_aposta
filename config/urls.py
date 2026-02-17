@@ -11,6 +11,8 @@ urlpatterns = [
     path('wallet/', include('wallet.urls')),
     path('betting/', include('betting.urls')),
     path('api/', include('betting.api_urls')),
+    path('predictions/', include('predictions.urls')),
+    path('api/predictions/', include('predictions.api_urls')),
 ]
 
 if settings.DEBUG:

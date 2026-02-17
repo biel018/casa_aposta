@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Meu Portfólio - Predictions{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <h2 class="text-white fw-bold mb-4">
+        <i class="bi bi-briefcase text-success"></i> Meu Portfólio
+    </h2>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary text-center p-3">
+                <div class="text-muted small">Total Investido</div>
+                <div class="fs-3 fw-bold text-white">${{ total_invested|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary text-center p-3">
+                <div class="text-muted small">Valor Atual</div>
+                <div class="fs-3 fw-bold text-info">${{ total_value|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary text-center p-3">
+                <div class="text-muted small">P&L Total</div>
+                <div class="fs-3 fw-bold {% if total_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if total_pnl >= 0 %}+{% endif %}${{ total_pnl|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Positions -->
+    <div class="card bg-dark border-secondary mb-4">
+        <div class="card-header border-secondary">
+            <h5 class="mb-0 text-white"><i class="bi bi-pie-chart"></i> Posições Ativas</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr class="text-muted small">
+                            <th>Mercado</th>
+                            <th>Outcome</th>
+                            <th class="text-center">Shares</th>
+                            <th class="text-center">Preço Médio</th>
+                            <th class="text-center">Preço Atual</th>
+                            <th class="text-center">Valor</th>
+                            <th class="text-end">P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pos in positions %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'predictions:market_detail' pos.outcome.market.slug %}" class="text-success text-decoration-none">
+                                    {{ pos.outcome.market.title|truncatewords:8 }}
+                                </a>
+                                <br>
+                                <small class="text-muted">
+                                    <span class="badge bg-{{ pos.outcome.market.category.color }} bg-opacity-25 small">
+                                        {{ pos.outcome.market.category.name }}
+                                    </span>
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge {% if pos.outcome.slug == 'yes' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ pos.outcome.name }}
+                                </span>
+                            </td>
+                            <td class="text-center text-white">{{ pos.shares|floatformat:0 }}</td>
+                            <td class="text-center text-muted">${{ pos.avg_price|floatformat:2 }}</td>
+                            <td class="text-center text-white">${{ pos.outcome.price|floatformat:2 }}</td>
+                            <td class="text-center text-white">${{ pos.current_value|floatformat:2 }}</td>
+                            <td class="text-end fw-bold {% if pos.unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if pos.unrealized_pnl >= 0 %}+{% endif %}${{ pos.unrealized_pnl|floatformat:2 }}
+                                <br>
+                                <small>({% if pos.pnl_percent >= 0 %}+{% endif %}{{ pos.pnl_percent|floatformat:1 }}%)</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                Você não possui posições ativas.
+                                <br>
+                                <a href="{% url 'predictions:market_list' %}" class="btn btn-sm btn-success mt-2">
+                                    <i class="bi bi-graph-up-arrow"></i> Explorar Mercados
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Open Orders -->
+    <div class="card bg-dark border-secondary mb-4">
+        <div class="card-header border-secondary">
+            <h5 class="mb-0 text-white"><i class="bi bi-clock-history"></i> Ordens Abertas</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr class="text-muted small">
+                            <th>Mercado</th>
+                            <th>Outcome</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Preço</th>
+                            <th class="text-center">Qtd</th>
+                            <th class="text-center">Restante</th>
+                            <th class="text-end">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in open_orders %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'predictions:market_detail' order.outcome.market.slug %}" class="text-success text-decoration-none">
+                                    {{ order.outcome.market.title|truncatewords:6 }}
+                                </a>
+                            </td>
+                            <td>{{ order.outcome.name }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if order.side == 'buy' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ order.get_side_display }}
+                                </span>
+                            </td>
+                            <td class="text-center text-white">${{ order.price|floatformat:2 }}</td>
+                            <td class="text-center">{{ order.quantity|floatformat:0 }}</td>
+                            <td class="text-center">{{ order.remaining_quantity|floatformat:0 }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{% url 'predictions:cancel_order' order.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-3">Sem ordens abertas.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trades -->
+    <div class="card bg-dark border-secondary">
+        <div class="card-header border-secondary">
+            <h5 class="mb-0 text-white"><i class="bi bi-arrow-left-right"></i> Histórico de Trades</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr class="text-muted small">
+                            <th>Mercado</th>
+                            <th>Outcome</th>
+                            <th class="text-center">Preço</th>
+                            <th class="text-center">Qtd</th>
+                            <th class="text-end">Quando</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                        <tr class="small">
+                            <td>
+                                <a href="{% url 'predictions:market_detail' trade.outcome.market.slug %}" class="text-success text-decoration-none">
+                                    {{ trade.outcome.market.title|truncatewords:6 }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge {% if trade.outcome.slug == 'yes' %}bg-success{% else %}bg-danger{% endif %} bg-opacity-50">
+                                    {{ trade.outcome.name }}
+                                </span>
+                            </td>
+                            <td class="text-center text-white">${{ trade.price|floatformat:2 }}</td>
+                            <td class="text-center">{{ trade.quantity|floatformat:0 }}</td>
+                            <td class="text-end text-muted">{{ trade.created_at|timesince }} atrás</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">Nenhum trade realizado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
