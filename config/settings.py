@@ -3,11 +3,19 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-mude-esta-chave-em-producao-casa-aposta-2026'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-mude-esta-chave-em-producao-casa-aposta-2026'
+)
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', '.vercel.app', '.now.sh', '127.0.0.1', 'localhost']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://*.now.sh',
+]
 
 INSTALLED_APPS = [
     'daphne',
@@ -31,6 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -92,6 +101,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
