@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Transações - Casa de Apostas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark border-secondary">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="text-white mb-0"><i class="bi bi-clock-history"></i> Histórico de Transações</h4>
+                <div>
+                    <a href="{% url 'wallet:history' %}" class="btn btn-sm {% if not current_type %}btn-success{% else %}btn-outline-secondary{% endif %}">Todas</a>
+                    <a href="{% url 'wallet:history' %}?type=deposit" class="btn btn-sm {% if current_type == 'deposit' %}btn-success{% else %}btn-outline-secondary{% endif %}">Depósitos</a>
+                    <a href="{% url 'wallet:history' %}?type=withdrawal" class="btn btn-sm {% if current_type == 'withdrawal' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Saques</a>
+                    <a href="{% url 'wallet:history' %}?type=bet" class="btn btn-sm {% if current_type == 'bet' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Apostas</a>
+                    <a href="{% url 'wallet:history' %}?type=win" class="btn btn-sm {% if current_type == 'win' %}btn-info{% else %}btn-outline-secondary{% endif %}">Ganhos</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Saldo Após</th>
+                            <th>Status</th>
+                            <th>Descrição</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr>
+                            <td>
+                                {% if tx.is_credit %}
+                                <span class="badge bg-success"><i class="bi bi-arrow-down-circle"></i> {{ tx.get_type_display }}</span>
+                                {% else %}
+                                <span class="badge bg-danger"><i class="bi bi-arrow-up-circle"></i> {{ tx.get_type_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="{% if tx.is_credit %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                {% if tx.is_credit %}+{% else %}-{% endif %}R$ {{ tx.amount|floatformat:2 }}
+                            </td>
+                            <td>R$ {{ tx.balance_after|floatformat:2 }}</td>
+                            <td><span class="badge bg-secondary">{{ tx.get_status_display }}</span></td>
+                            <td class="text-muted">{{ tx.description }}</td>
+                            <td class="text-muted">{{ tx.created_at|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1"></i>
+                <p class="mt-2">Nenhuma transação encontrada.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Sacar - Casa de Apostas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card bg-dark border-warning">
+                <div class="card-header bg-dark border-warning">
+                    <h4 class="text-white mb-0"><i class="bi bi-cash-stack text-warning"></i> Sacar</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <small class="text-muted">Saldo disponível para saque</small>
+                        <h3 class="text-warning">R$ {{ wallet.balance|floatformat:2 }}</h3>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-light">{{ form.amount.label }}</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <div class="text-danger mt-1">{{ form.amount.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-light">{{ form.pix_key.label }}</label>
+                            {{ form.pix_key }}
+                            {% if form.pix_key.errors %}
+                            <div class="text-danger mt-1">{{ form.pix_key.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-info-circle"></i> O saque será processado via PIX em até 30 minutos.
+                            Valor mínimo: R$ 20,00.
+                        </div>
+
+                        <button type="submit" class="btn btn-warning btn-lg w-100 text-dark">
+                            <i class="bi bi-check-circle"></i> Solicitar Saque
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

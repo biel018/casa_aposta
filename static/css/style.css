@@ -1,0 +1,117 @@
+/* ===== Casa de Apostas - Styles ===== */
+
+:root {
+    --green: #198754;
+    --green-dark: #146c43;
+    --gold: #ffc107;
+}
+
+body {
+    background-color: #1a1a2e;
+    min-height: 100vh;
+}
+
+/* Hero */
+.hero-banner {
+    background: linear-gradient(135deg, #0f3443 0%, #34e89e20 100%);
+    border-bottom: 2px solid var(--green);
+}
+
+/* Cards */
+.event-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.event-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--green) !important;
+    box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
+}
+
+/* Odd buttons */
+.odd-btn {
+    transition: all 0.15s ease;
+}
+.odd-btn:hover {
+    background-color: var(--green) !important;
+    border-color: var(--green) !important;
+    color: white !important;
+    transform: scale(1.05);
+}
+
+.odd-select-btn {
+    transition: all 0.15s ease;
+}
+.odd-select-btn:hover,
+.odd-select-btn.active {
+    transform: scale(1.02);
+}
+
+/* Pulse animation */
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Navbar */
+.navbar {
+    backdrop-filter: blur(10px);
+}
+
+/* Tables */
+.table-dark {
+    --bs-table-bg: #1a1a2e;
+}
+.table-dark thead {
+    background-color: #16213e;
+}
+
+/* List Group */
+.list-group-item.bg-dark {
+    border-color: #2d2d44 !important;
+}
+.list-group-item.bg-dark:hover {
+    background-color: #2d2d44 !important;
+}
+.list-group-item.bg-dark.active {
+    background-color: #1e4d2b !important;
+}
+
+/* Cards dark adjustments */
+.card.bg-dark {
+    background-color: #16213e !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Bet slip sticky */
+#bet-slip {
+    z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    .event-card .card-body {
+        padding: 0.75rem;
+    }
+}

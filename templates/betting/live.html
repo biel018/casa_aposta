@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Ao Vivo - Casa de Apostas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="text-white mb-4">
+        <i class="bi bi-broadcast text-danger"></i> Eventos Ao Vivo
+        <span class="badge bg-danger pulse">LIVE</span>
+    </h3>
+
+    {% if events %}
+    <div class="row g-3">
+        {% for event in events %}
+        <div class="col-md-6">
+            <a href="{% url 'betting:event_detail' event.pk %}" class="text-decoration-none">
+                <div class="card bg-dark border-danger event-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">
+                                <i class="{{ event.sport.icon }}"></i> {{ event.league.name }}
+                            </small>
+                            <span class="badge bg-danger pulse">AO VIVO</span>
+                        </div>
+
+                        <div class="row align-items-center my-3">
+                            <div class="col-5 text-end">
+                                <h5 class="text-white">{{ event.home_team }}</h5>
+                            </div>
+                            <div class="col-2 text-center">
+                                <h3 class="text-white">{{ event.home_score }} - {{ event.away_score }}</h3>
+                            </div>
+                            <div class="col-5 text-start">
+                                <h5 class="text-white">{{ event.away_team }}</h5>
+                            </div>
+                        </div>
+
+                        {% for market in event.markets.all %}
+                        {% if market.slug == 'resultado-final' or market.slug == 'vencedor' %}
+                        <div class="d-flex gap-2">
+                            {% for odd in market.odds.all %}
+                            <span class="btn btn-sm btn-outline-danger flex-fill text-center">
+                                <small class="d-block text-muted">{{ odd.name|truncatewords:2 }}</small>
+                                <strong>{{ odd.value }}</strong>
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-broadcast fs-1"></i>
+        <p class="mt-2 fs-5">Nenhum evento ao vivo no momento.</p>
+        <a href="{% url 'betting:events' %}" class="btn btn-success mt-2">
+            <i class="bi bi-calendar-event"></i> Ver Próximos Eventos
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

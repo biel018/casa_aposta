@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ event.home_team }} vs {{ event.away_team }} - Casa de Apostas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Event Header -->
+    <div class="card bg-dark border-success mb-4">
+        <div class="card-body text-center py-4">
+            <small class="text-muted">
+                <i class="{{ event.sport.icon }}"></i> {{ event.league.name }}
+                {% if event.is_live %}<span class="badge bg-danger pulse ms-2">AO VIVO</span>{% endif %}
+            </small>
+
+            <div class="row align-items-center mt-3">
+                <div class="col-md-4 text-end">
+                    <h3 class="text-white">{{ event.home_team }}</h3>
+                </div>
+                <div class="col-md-4 text-center">
+                    {% if event.status == 'live' or event.status == 'finished' %}
+                    <div class="display-4 fw-bold">
+                        <span class="text-white">{{ event.home_score }}</span>
+                        <span class="text-muted mx-2">-</span>
+                        <span class="text-white">{{ event.away_score }}</span>
+                    </div>
+                    {% else %}
+                    <div class="text-muted">
+                        <i class="bi bi-clock fs-4"></i><br>
+                        {{ event.start_time|date:"d/m/Y" }}<br>
+                        <strong class="text-white fs-4">{{ event.start_time|date:"H:i" }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 text-start">
+                    <h3 class="text-white">{{ event.away_team }}</h3>
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <span class="badge bg-{% if event.status == 'live' %}danger{% elif event.status == 'finished' %}secondary{% else %}success{% endif %}">
+                    {{ event.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mercados de Apostas -->
+    <div class="row">
+        <div class="col-md-8">
+            {% for market in event.markets.all %}
+            {% if market.is_active %}
+            <div class="card bg-dark border-secondary mb-3">
+                <div class="card-header bg-dark border-secondary">
+                    <h6 class="text-white mb-0">{{ market.name }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for odd in market.odds.all %}
+                        {% if odd.is_active %}
+                        <div class="col">
+                            <button type="button"
+                                    class="btn btn-outline-success w-100 odd-select-btn py-3"
+                                    data-odd-id="{{ odd.id }}"
+                                    data-odd-name="{{ odd.name }}"
+                                    data-odd-value="{{ odd.value }}"
+                                    data-event-name="{{ event }}"
+                                    data-market-name="{{ market.name }}">
+                                <small class="d-block text-muted">{{ odd.name }}</small>
+                                <strong class="fs-5" id="odd-value-{{ odd.id }}">{{ odd.value }}</strong>
+                            </button>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Bet Slip (cupom de aposta) -->
+        <div class="col-md-4">
+            <div class="card bg-dark border-success sticky-top" style="top: 80px;" id="bet-slip">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="bi bi-ticket-perforated"></i> Cupom de Aposta</h6>
+                </div>
+                <div class="card-body" id="bet-slip-body">
+                    <div id="bet-slip-empty" class="text-center text-muted py-4">
+                        <i class="bi bi-hand-index fs-1"></i>
+                        <p class="mt-2">Selecione uma odd para apostar</p>
+                    </div>
+
+                    <div id="bet-slip-content" style="display:none;">
+                        <div class="mb-3">
+                            <small class="text-muted" id="bet-event-name"></small>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white" id="bet-selection-name"></span>
+                                <span class="text-success fw-bold" id="bet-odd-value"></span>
+                            </div>
+                        </div>
+
+                        <form method="post" id="bet-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="odd_id" id="bet-odd-id">
+                            <div class="mb-3">
+                                <label class="form-label text-light">Valor da Aposta</label>
+                                <input type="number" name="amount" id="bet-amount"
+                                       class="form-control form-control-lg bg-dark text-white border-secondary"
+                                       min="1" step="0.01" placeholder="R$ 0,00" required>
+                            </div>
+
+                            <div class="d-flex gap-1 mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-bet" data-amount="10">R$10</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-bet" data-amount="25">R$25</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-bet" data-amount="50">R$50</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-bet" data-amount="100">R$100</button>
+                            </div>
+
+                            <div class="bg-black p-2 rounded mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Ganho Potencial</span>
+                                    <span class="text-success fw-bold fs-5" id="potential-win">R$ 0,00</span>
+                                </div>
+                            </div>
+
+                            {% if user.is_authenticated %}
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-check-circle"></i> Apostar
+                            </button>
+                            {% else %}
+                            <a href="{% url 'accounts:login' %}" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> Entre para Apostar
+                            </a>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Selecionar odd
+document.querySelectorAll('.odd-select-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove active de todos
+        document.querySelectorAll('.odd-select-btn').forEach(b => b.classList.remove('active', 'btn-success'));
+        document.querySelectorAll('.odd-select-btn').forEach(b => b.classList.add('btn-outline-success'));
+
+        // Ativa selecionado
+        btn.classList.remove('btn-outline-success');
+        btn.classList.add('active', 'btn-success');
+
+        // Preenche o cupom
+        document.getElementById('bet-slip-empty').style.display = 'none';
+        document.getElementById('bet-slip-content').style.display = 'block';
+        document.getElementById('bet-odd-id').value = btn.dataset.oddId;
+        document.getElementById('bet-selection-name').textContent = btn.dataset.oddName;
+        document.getElementById('bet-odd-value').textContent = btn.dataset.oddValue;
+        document.getElementById('bet-event-name').textContent = btn.dataset.eventName;
+
+        updatePotentialWin();
+    });
+});
+
+// Valor rápido
+document.querySelectorAll('.quick-bet').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('bet-amount').value = btn.dataset.amount;
+        updatePotentialWin();
+    });
+});
+
+// Calcular ganho potencial
+document.getElementById('bet-amount')?.addEventListener('input', updatePotentialWin);
+
+function updatePotentialWin() {
+    const amount = parseFloat(document.getElementById('bet-amount').value) || 0;
+    const oddValue = parseFloat(document.getElementById('bet-odd-value').textContent) || 0;
+    const potential = (amount * oddValue).toFixed(2);
+    document.getElementById('potential-win').textContent = `R$ ${potential}`;
+}
+
+// Submeter aposta
+document.getElementById('bet-form')?.addEventListener('submit', function(e) {
+    const oddId = document.getElementById('bet-odd-id').value;
+    const amount = document.getElementById('bet-amount').value;
+    if (!oddId || !amount) {
+        e.preventDefault();
+        alert('Selecione uma odd e informe o valor da aposta.');
+    }
+    this.action = "{% url 'betting:place_bet' event.pk %}";
+});
+
+// WebSocket para odds em tempo real
+{% if event.is_live %}
+const ws = new WebSocket(`ws://${window.location.host}/ws/odds/{{ event.pk }}/`);
+ws.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.type === 'odds_update') {
+        for (const [oddId, newValue] of Object.entries(data.data)) {
+            const el = document.getElementById(`odd-value-${oddId}`);
+            if (el) {
+                const oldVal = parseFloat(el.textContent);
+                el.textContent = newValue;
+                el.classList.add(newValue > oldVal ? 'text-success' : 'text-danger');
+                setTimeout(() => el.classList.remove('text-success', 'text-danger'), 2000);
+            }
+        }
+    }
+    if (data.type === 'score_update') {
+        location.reload();
+    }
+};
+{% endif %}
+</script>
+{% endblock %}

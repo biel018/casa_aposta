@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Minhas Apostas - Casa de Apostas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary text-center p-3">
+                <h6 class="text-muted">Total de Apostas</h6>
+                <h3 class="text-white">{{ total_bets }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-success text-center p-3">
+                <h6 class="text-muted">Apostas Ganhas</h6>
+                <h3 class="text-success">{{ won_bets }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-warning text-center p-3">
+                <h6 class="text-muted">Apostas Pendentes</h6>
+                <h3 class="text-warning">{{ pending_bets }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark border-secondary">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="text-white mb-0"><i class="bi bi-ticket-perforated"></i> Minhas Apostas</h4>
+                <div>
+                    <a href="{% url 'betting:my_bets' %}" class="btn btn-sm {% if not current_status %}btn-success{% else %}btn-outline-secondary{% endif %}">Todas</a>
+                    <a href="{% url 'betting:my_bets' %}?status=pending" class="btn btn-sm {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Pendentes</a>
+                    <a href="{% url 'betting:my_bets' %}?status=won" class="btn btn-sm {% if current_status == 'won' %}btn-success{% else %}btn-outline-secondary{% endif %}">Ganhas</a>
+                    <a href="{% url 'betting:my_bets' %}?status=lost" class="btn btn-sm {% if current_status == 'lost' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Perdidas</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if bets %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Seleção</th>
+                            <th>Odd</th>
+                            <th>Valor</th>
+                            <th>Ganho Potencial</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bet in bets %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'betting:event_detail' bet.odd.market.event.pk %}" class="text-success text-decoration-none">
+                                    {{ bet.odd.market.event }}
+                                </a>
+                                <br><small class="text-muted">{{ bet.odd.market.event.league.name }}</small>
+                            </td>
+                            <td class="text-white">{{ bet.odd.name }}</td>
+                            <td class="text-success fw-bold">{{ bet.odd_value }}</td>
+                            <td>R$ {{ bet.amount|floatformat:2 }}</td>
+                            <td class="text-warning fw-bold">R$ {{ bet.potential_win|floatformat:2 }}</td>
+                            <td>
+                                {% if bet.status == 'pending' %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pendente</span>
+                                {% elif bet.status == 'won' %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Ganha</span>
+                                {% elif bet.status == 'lost' %}
+                                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Perdida</span>
+                                {% elif bet.status == 'cancelled' %}
+                                <span class="badge bg-secondary"><i class="bi bi-slash-circle"></i> Cancelada</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted">{{ bet.created_at|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-ticket-perforated fs-1"></i>
+                <p class="mt-2">Nenhuma aposta encontrada.</p>
+                <a href="{% url 'betting:events' %}" class="btn btn-success">
+                    <i class="bi bi-calendar-event"></i> Ver Eventos
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

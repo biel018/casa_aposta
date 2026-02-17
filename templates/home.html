@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Casa de Apostas - As Melhores Odds{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="hero-banner mb-4">
+    <div class="container text-center py-5">
+        <h1 class="display-4 fw-bold text-white">
+            <i class="bi bi-trophy-fill text-warning"></i> CASA DE APOSTAS
+        </h1>
+        <p class="lead text-light">As melhores odds do mercado. Aposte nos seus times favoritos!</p>
+        <div class="mt-4">
+            {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-success btn-lg me-2">
+                <i class="bi bi-person-plus"></i> Criar Conta Grátis
+            </a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-box-arrow-in-right"></i> Entrar
+            </a>
+            {% else %}
+            <a href="{% url 'betting:events' %}" class="btn btn-success btn-lg me-2">
+                <i class="bi bi-calendar-event"></i> Ver Eventos
+            </a>
+            <a href="{% url 'betting:live' %}" class="btn btn-danger btn-lg">
+                <i class="bi bi-broadcast"></i> Ao Vivo
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="container mb-4">
+    <div class="row g-3">
+        <div class="col-md-3 col-6">
+            <div class="card bg-dark border-success text-center p-3">
+                <i class="bi bi-dribbble text-success fs-1"></i>
+                <h5 class="mt-2 text-white">Futebol</h5>
+                <small class="text-muted">Brasileirão, Champions & mais</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-dark border-warning text-center p-3">
+                <i class="bi bi-basketball text-warning fs-1"></i>
+                <h5 class="mt-2 text-white">Basquete</h5>
+                <small class="text-muted">NBA e ligas mundiais</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-dark border-info text-center p-3">
+                <i class="bi bi-person-arms-up text-info fs-1"></i>
+                <h5 class="mt-2 text-white">MMA/UFC</h5>
+                <small class="text-muted">Lutas e combates</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-dark border-danger text-center p-3">
+                <i class="bi bi-controller text-danger fs-1"></i>
+                <h5 class="mt-2 text-white">E-Sports</h5>
+                <small class="text-muted">LoL, CS2, Valorant</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="container mb-5">
+    <h3 class="text-center text-white mb-4">Por que apostar conosco?</h3>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary h-100 p-4 text-center">
+                <i class="bi bi-lightning-charge text-warning fs-1"></i>
+                <h5 class="text-white mt-3">Odds em Tempo Real</h5>
+                <p class="text-muted">Odds atualizadas instantaneamente. Acompanhe as mudanças ao vivo.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary h-100 p-4 text-center">
+                <i class="bi bi-shield-check text-success fs-1"></i>
+                <h5 class="text-white mt-3">Seguro e Confiável</h5>
+                <p class="text-muted">Seus dados e transações protegidos com a melhor tecnologia.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary h-100 p-4 text-center">
+                <i class="bi bi-cash-stack text-info fs-1"></i>
+                <h5 class="text-white mt-3">Saques Rápidos</h5>
+                <p class="text-muted">Receba seus ganhos via PIX em poucos minutos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
